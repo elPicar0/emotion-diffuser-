@@ -362,3 +362,160 @@ Frontend → routes.py → orchestrator.py
 That’s your entire system lifecycle.
 
 ---
+
+Perfect — this is exactly what judges *love* to see in a repo: clear ownership and modular responsibility.
+Below is something you can paste straight into your **README → Team Responsibilities** section.
+
+---
+
+# 👥 Team Responsibilities & File Ownership
+
+To ensure parallel development and minimal merge conflicts, the project is divided into four independent modules.
+Each teammate owns a subsystem and its corresponding files.
+
+---
+
+## 🧠 Member 1 — Backend & API Architect
+
+**Role:** System entrypoint, API contracts, request routing
+**Skill focus:** FastAPI, JSON design, architecture
+
+### Files owned
+
+```
+backend/main.py
+backend/routes.py
+backend/schemas.py
+backend/config.py
+```
+
+### Responsibilities
+
+* Define API endpoints (`/analyze`, `/health`, `/rewrite`)
+* Define request/response schemas
+* Handle validation & error handling
+* Load environment variables and settings
+* Ensure frontend can communicate with backend
+
+### Deliverable
+
+A working API server that accepts JSON and returns structured responses.
+
+---
+
+## 🔬 Member 2 — Emotion Analysis Engineer
+
+**Role:** Emotion detection + escalation scoring
+**Skill focus:** NLP, HuggingFace, Python logic
+
+### Files owned
+
+```
+analysis_engine/analyzer.py
+analysis_engine/models.py
+analysis_engine/utils.py
+```
+
+### Responsibilities
+
+* Load emotion & toxicity models
+* Implement scoring logic
+* Detect escalation triggers
+* Output structured emotional analysis
+
+### Deliverable
+
+A function that converts raw text into emotion + risk scores.
+
+---
+
+## 🕊️ Member 3 — AI Mediation Engineer
+
+**Role:** LLM rewriting + tone diffusion
+**Skill focus:** LLM APIs, prompt design, output shaping
+
+### Files owned
+
+```
+mediator_engine/rewrite.py
+mediator_engine/prompts.py
+mediator_engine/client.py
+```
+
+### Responsibilities
+
+* Write system prompts for tone softening
+* Integrate OpenAI/Gemini/Claude APIs
+* Handle retries, formatting, token limits
+* Produce calm, constructive rewrites
+
+### Deliverable
+
+A function that converts emotional text into a calmer version.
+
+---
+
+## 🎨 Member 4 — Frontend & Integration Engineer
+
+**Role:** User interface + system integration testing
+**Skill focus:** Streamlit, UX flow, API calls
+
+### Files owned
+
+```
+frontend/app.py
+datasets/sample_dialogues.json
+tests/test_api.py
+tests/test_analysis.py
+README.md (demo section)
+```
+
+### Responsibilities
+
+* Build user interface for message input/output
+* Display emotion analysis visually
+* Show rewritten suggestion
+* Write demo scripts & test cases
+* Prepare demo walkthrough for judges
+
+### Deliverable
+
+A working interface that demonstrates the full pipeline.
+
+---
+
+# 🧩 Shared Responsibility
+
+### `backend/orchestrator.py`
+
+This file is the **integration layer**.
+
+All members collaborate here to connect:
+
+```
+analysis_engine → mediator_engine → API output
+```
+
+No one edits this file alone — integration happens together near the end.
+
+---
+
+# 🚀 Development Strategy
+
+Each member can work **independently** because:
+
+* API contracts are defined early
+* Engines return structured JSON
+* Orchestrator connects modules only at final stage
+
+This prevents blocking and enables parallel development.
+
+---
+
+If you want, I can also give you:
+
+👉 a **1-week hackathon timeline**
+👉 or a **Git workflow plan so merges don’t explode**
+
+Both massively increase your chances of actually finishing.
+
