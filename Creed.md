@@ -955,7 +955,157 @@ That sounds **research-driven**, not gimmicky.
 
 ---
 
-> **This is the heart of the project. De-escalation saves the moment. Apologies save the relationship.**
+# 🔄 Conversation Triggers: Re-Engagement System (Research-Backed)
+
+When a conversation dies, relationships drift. Emotion Diffuser doesn't just fix *conflict* — it also fixes *silence*.
+
+The system detects when a conversation is losing momentum and suggests **psychologically-grounded triggers** to re-engage.
+
+---
+
+## 🚨 Disengagement Detection Signals
+
+The analysis engine detects conversational fade-out by looking for:
+
+| Signal | Example | Psychology |
+|--------|---------|------------|
+| **Short responses** | "ok", "yeah", "cool", "hmm" | Low cognitive investment = low interest |
+| **Delayed replies** | Response time increasing | Approach-avoidance motivation (Elliot, 2006) |
+| **No questions asked** | All statements, no curiosity | Lack of reciprocal engagement |
+| **Flat emotional tone** | No humor, excitement, or warmth | Emotional disengagement (Gottman) |
+| **Conversation loops** | Repeating same topic without depth | Topic exhaustion |
+
+When **2+ signals** are detected, the system flags the conversation as **disengaging** and offers re-engagement triggers.
+
+---
+
+## 🧠 5 Re-Engagement Strategies (Psychology-Backed)
+
+### 1️⃣ The Curiosity Gap
+
+**Based on:** Loewenstein's Information Gap Theory (1994)
+
+Create a gap between what someone knows and what they *want* to know.
+
+❌ "How was your day?"
+✅ "Something wild happened today — remind me to tell you later."
+
+**Why it works:** The brain craves closure. An open loop compels a response.
+
+---
+
+### 2️⃣ The Reciprocity Hook
+
+**Based on:** Cialdini's Principle of Reciprocity (1984)
+
+Share something personal first — people feel compelled to match your vulnerability.
+
+❌ "What are you thinking about?"
+✅ "I've been overthinking something all day… can I get your take?"
+
+**Why it works:** Vulnerability invites vulnerability. Giving first triggers giving back.
+
+---
+
+### 3️⃣ The Self-Disclosure Ladder
+
+**Based on:** Jourard's Self-Disclosure Theory (1971)
+
+Gradually deepen the conversation by sharing something slightly more personal.
+
+❌ Surface: "Nice weather today."
+✅ Deeper: "I've been thinking about whether I'm actually happy with how things are going."
+
+**Why it works:** Relationships deepen through progressive self-disclosure. Staying surface-level kills connection.
+
+---
+
+### 4️⃣ The Open-Ended Pivot
+
+**Based on:** Motivational Interviewing (Miller & Rollnick, 2002)
+
+Replace closed questions with open ones that invite storytelling.
+
+❌ "Did you like the movie?" → "yeah"
+✅ "What part of the movie stuck with you?" → actual conversation
+
+**Why it works:** Open questions activate narrative thinking, which produces longer, richer responses.
+
+---
+
+### 5️⃣ The Validation Anchor
+
+**Based on:** Emotional Validation Theory (Linehan, 1993)
+
+Acknowledge what someone just said before pivoting.
+
+❌ Ignoring their last message and changing topic
+✅ "That makes total sense — and it reminds me of something…"
+
+**Why it works:** People disengage when they feel unheard. Validation reopens the door.
+
+---
+
+## 🧩 Trigger Detection Output Format
+
+```
+{
+  "engagement_level": "low",
+  "signals_detected": ["short_responses", "no_questions"],
+  "suggested_trigger": {
+    "strategy": "curiosity_gap",
+    "suggestion": "Something came up today that I think you'd find interesting...",
+    "psychology": "Loewenstein's Information Gap Theory"
+  }
+}
+```
+
+This is produced by `analysis_engine/analyzer.py` and surfaced via `orchestrator.py`.
+
+---
+
+## 🤖 Example Transformation
+
+### Input (dying conversation)
+
+```
+Person A: "Hey"
+Person B: "Hey"
+Person A: "What's up"
+Person B: "Nothing much"
+Person A: "Cool"
+```
+
+### System Detection
+
+> ⚠️ Engagement level: LOW — short responses, no questions, flat tone
+
+### Suggested Trigger (Curiosity Gap)
+
+> "I just found out something about [shared interest] that completely changed how I think about it — have you heard about this?"
+
+### Suggested Trigger (Reciprocity Hook)
+
+> "I've been meaning to ask you something — you're honestly the only person whose opinion I trust on this."
+
+---
+
+## 🏗️ Pipeline Integration
+
+```
+1. Receive conversation history
+2. Analyze engagement signals (analyzer.py)
+3. If engagement = low → generate re-engagement trigger
+4. Select strategy based on conversation context
+5. Return trigger suggestion via /triggers endpoint
+```
+
+**New endpoint:** `POST /triggers`
+**New schema:** `TriggerOut(engagement_level, signals_detected, suggested_trigger)`
+
+---
+
+> **This is the heart of the project. De-escalation saves the moment. Apologies save the relationship. Triggers keep it alive.**
 
 ---
 
