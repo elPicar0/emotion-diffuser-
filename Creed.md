@@ -519,3 +519,291 @@ If you want, I can also give you:
 
 Both massively increase your chances of actually finishing.
 
+Perfect — now we go one level deeper.
+Below is **member-by-member actionable instructions**. Not vague roles — actual “open this file → write this kind of code” guidance.
+
+You can paste this into your README under **Implementation Guide**.
+
+---
+
+# 👨‍💻 Member 1 — Backend & API Architect
+
+## `backend/main.py`
+
+You must:
+
+* Create FastAPI app instance
+* Register router
+* Add title + metadata
+* Add root health endpoint
+
+Goal:
+
+```
+uvicorn backend.main:app --reload
+```
+
+should start the server.
+
+---
+
+## `backend/routes.py`
+
+You must:
+
+* Define POST `/analyze`
+* Accept `MessageIn` schema
+* Call orchestrator function
+* Return JSON response
+
+Do NOT:
+
+* Put ML code here
+* Put prompts here
+
+This file only routes requests.
+
+---
+
+## `backend/schemas.py`
+
+You must:
+
+* Define all API input/output formats
+
+Minimum required schemas:
+
+```
+MessageIn(text: str)
+AnalysisOut(emotion, intensity, risk)
+RewriteOut(original, rewritten, emotion)
+```
+
+This ensures the whole team speaks the same JSON language.
+
+---
+
+## `backend/config.py`
+
+You must:
+
+* Load environment variables
+* Store model names
+* Store API keys
+
+Example responsibilities:
+
+```
+load OPENAI_API_KEY
+set MODEL_NAME
+define DEBUG flag
+```
+
+This file prevents keys scattered across project.
+
+---
+
+# 🔬 Member 2 — Emotion Analysis Engineer
+
+## `analysis_engine/models.py`
+
+You must:
+
+* Load HuggingFace pipelines
+* Cache them globally
+
+Example tasks:
+
+```
+emotion_model = pipeline("text-classification", ...)
+toxicity_model = pipeline(...)
+```
+
+This file only loads models — no logic.
+
+---
+
+## `analysis_engine/utils.py`
+
+You must:
+
+* Write helper logic
+
+Examples:
+
+* keyword triggers
+* escalation thresholds
+* normalization functions
+* scoring adjustments
+
+This file keeps analyzer clean.
+
+---
+
+## `analysis_engine/analyzer.py`
+
+You must:
+
+* Call models
+* Interpret outputs
+* Combine scores
+* Produce structured JSON
+
+Required output format:
+
+```
+{
+  "emotion": "...",
+  "intensity": float,
+  "risk": "low/medium/high"
+}
+```
+
+This file converts raw text → emotional insight.
+
+---
+
+# 🕊️ Member 3 — AI Mediation Engineer
+
+## `mediator_engine/prompts.py`
+
+You must:
+
+* Write all system prompts
+* Include few-shot examples
+* Define tone rules
+
+Nothing else in project should contain prompts.
+
+This makes prompts editable without touching code.
+
+---
+
+## `mediator_engine/client.py`
+
+You must:
+
+* Implement API wrapper for LLM provider
+* Load API key from config
+* Handle retries/timeouts
+* Return clean string output
+
+This file isolates vendor lock-in.
+
+---
+
+## `mediator_engine/rewrite.py`
+
+You must:
+
+* Accept original text + analysis result
+* Build final prompt using prompts.py
+* Call client.py
+* Return rewritten output
+
+Required output format:
+
+```
+{
+  "rewritten": "...",
+  "tone": "calm"
+}
+```
+
+This file performs the actual mediation.
+
+---
+
+# 🎨 Member 4 — Frontend & Integration Engineer
+
+## `frontend/app.py`
+
+You must:
+
+* Create text input box
+* Send POST request to backend
+* Display emotion analysis
+* Display rewritten suggestion
+
+Minimum demo flow:
+
+```
+User types message → clicks button → sees calm rewrite
+```
+
+Use Streamlit for speed.
+
+Run with:
+
+```
+streamlit run frontend/app.py
+```
+
+---
+
+## `datasets/sample_dialogues.json`
+
+You must:
+
+* Add sample arguments
+* Add angry conversations
+* Add neutral cases
+* Add conflict escalation examples
+
+These will be used for demo/testing.
+
+---
+
+## `tests/test_api.py`
+
+You must:
+
+* Test API endpoint works
+* Test JSON schema valid
+* Test server response time
+
+Run with:
+
+```
+pytest tests/test_api.py
+```
+
+---
+
+## `tests/test_analysis.py`
+
+You must:
+
+* Feed sample dialogues to analyzer
+* Verify emotion labels reasonable
+* Ensure risk scoring consistent
+
+Run with:
+
+```
+pytest tests/test_analysis.py
+```
+
+---
+
+# 🧩 ALL MEMBERS — Integration Phase
+
+## `backend/orchestrator.py`
+
+This file connects everything.
+
+Final pipeline must be:
+
+```
+1. Receive text
+2. Call analyzer
+3. Call rewrite engine
+4. Merge outputs
+5. Return final JSON
+```
+
+No one writes this fully alone.
+
+This file is built together once modules are ready.
+
+---
