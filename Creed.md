@@ -25,7 +25,7 @@ uvicorn backend.main:app --reload
 
 **Purpose**
 
-* Defines HTTP endpoints (`/analyze`, `/health`, `/feedback`)
+* Defines HTTP endpoints (`/analyze`, `/health`, `/feedback`, `/apologize`)
 * Converts JSON → Pydantic schema
 * Calls orchestrator
 
@@ -57,6 +57,7 @@ backend.main
 MessageIn
 AnalysisOut
 RewriteOut
+ApologyOut
 ```
 
 **Used by**
@@ -77,7 +78,7 @@ frontend/
 * Handles pipeline flow:
 
 ```
-text → analyze emotion → check escalation → rewrite → return JSON
+text → analyze emotion → check escalation → rewrite → generate apology → return JSON
 ```
 
 **This file controls the logic order of the system**
@@ -186,20 +187,31 @@ analyzer.py
 
 # 🔹 mediator_engine/
 
-### `rewrite.py` — LLM rewrite logic
+### `rewrite.py` — LLM rewrite + apology logic
 
 **Purpose**
 
 * Takes emotional analysis + original text
-* Requests LLM rewrite
-* Returns softened message
+* Requests LLM rewrite (tone softening)
+* Generates heartfelt apology when escalation is detected
+* Returns softened message + apology suggestion
 
-**Output example**
+**Output example (rewrite)**
 
 ```
 {
   "rewritten": "...",
   "tone": "calm"
+}
+```
+
+**Output example (apology)**
+
+```
+{
+  "apology": "I realize what I said about ___ was hurtful. I take full responsibility...",
+  "tone": "empathetic",
+  "repair_type": "acknowledgment + ownership + repair"
 }
 ```
 
@@ -215,8 +227,9 @@ orchestrator.py
 
 **Purpose**
 
-* Stores all system prompts
-* Stores few-shot examples
+* Stores all system prompts (rewrite + apology)
+* Stores few-shot examples for tone softening
+* Stores few-shot examples for heartfelt apology generation
 * Prevents prompt chaos across files
 
 **This file should be the ONLY place containing prompts**
@@ -224,7 +237,7 @@ orchestrator.py
 **Used by**
 
 ```
-rewrite.py
+rewrite.py (both rewrite() and generate_apology())
 ```
 
 ---
@@ -241,7 +254,7 @@ rewrite.py
 **Used by**
 
 ```
-rewrite.py
+rewrite.py (rewrite + apology functions)
 ```
 
 ---
@@ -255,7 +268,8 @@ rewrite.py
 * Text input box
 * Displays analysis
 * Displays rewritten output
-* Calls backend API
+* Displays heartfelt apology suggestion
+* Calls backend API (`/analyze`, `/apologize`)
 
 **Run with**
 
@@ -355,9 +369,13 @@ Frontend → routes.py → orchestrator.py
       analyzer.py → models.py → utils.py
            ↓
       rewrite.py → prompts.py → client.py
-           ↓
-         JSON response
+           ↓                ↓
+      calm rewrite    heartfelt apology
+           ↓                ↓
+         JSON response (merged)
 ```
+
+**The system doesn't just de-escalate — it helps people repair relationships.**
 
 That’s your entire system lifecycle.
 
@@ -391,7 +409,7 @@ backend/config.py
 
 ### Responsibilities
 
-* Define API endpoints (`/analyze`, `/health`, `/rewrite`)
+* Define API endpoints (`/analyze`, `/health`, `/rewrite`, `/apologize`)
 * Define request/response schemas
 * Handle validation & error handling
 * Load environment variables and settings
@@ -445,13 +463,15 @@ mediator_engine/client.py
 ### Responsibilities
 
 * Write system prompts for tone softening
+* Write system prompts for heartfelt apology generation
 * Integrate OpenAI/Gemini/Claude APIs
 * Handle retries, formatting, token limits
 * Produce calm, constructive rewrites
+* Produce genuine, empathetic apologies that acknowledge + own + repair
 
 ### Deliverable
 
-A function that converts emotional text into a calmer version.
+Two functions: one that converts emotional text into a calmer version, and one that generates a heartfelt apology.
 
 ---
 
@@ -475,6 +495,7 @@ README.md (demo section)
 * Build user interface for message input/output
 * Display emotion analysis visually
 * Show rewritten suggestion
+* Show heartfelt apology suggestion
 * Write demo scripts & test cases
 * Prepare demo walkthrough for judges
 
@@ -552,6 +573,7 @@ should start the server.
 You must:
 
 * Define POST `/analyze`
+* Define POST `/apologize`
 * Accept `MessageIn` schema
 * Call orchestrator function
 * Return JSON response
@@ -577,6 +599,7 @@ Minimum required schemas:
 MessageIn(text: str)
 AnalysisOut(emotion, intensity, risk)
 RewriteOut(original, rewritten, emotion)
+ApologyOut(original, apology, tone, repair_type)
 ```
 
 This ensures the whole team speaks the same JSON language.
@@ -669,9 +692,11 @@ This file converts raw text → emotional insight.
 
 You must:
 
-* Write all system prompts
-* Include few-shot examples
+* Write all system prompts (rewrite + apology)
+* Include few-shot examples for tone softening
+* Include few-shot examples for heartfelt apologies
 * Define tone rules
+* Define apology structure: acknowledgment → ownership → repair offer
 
 Nothing else in project should contain prompts.
 
@@ -696,12 +721,12 @@ This file isolates vendor lock-in.
 
 You must:
 
-* Accept original text + analysis result
+* Implement `rewrite()` — accepts original text + analysis, returns calm rewrite
+* Implement `generate_apology()` — accepts original text + analysis, returns heartfelt apology
 * Build final prompt using prompts.py
 * Call client.py
-* Return rewritten output
 
-Required output format:
+Required output format (rewrite):
 
 ```
 {
@@ -710,7 +735,17 @@ Required output format:
 }
 ```
 
-This file performs the actual mediation.
+Required output format (apology):
+
+```
+{
+  "apology": "I realize that what I said was hurtful. I take responsibility for...",
+  "tone": "empathetic",
+  "repair_type": "acknowledgment + ownership + repair"
+}
+```
+
+This file performs the actual mediation AND relationship repair.
 
 ---
 
@@ -728,7 +763,7 @@ You must:
 Minimum demo flow:
 
 ```
-User types message → clicks button → sees calm rewrite
+User types message → clicks button → sees calm rewrite + heartfelt apology
 ```
 
 Use Streamlit for speed.
@@ -797,9 +832,10 @@ Final pipeline must be:
 ```
 1. Receive text
 2. Call analyzer
-3. Call rewrite engine
-4. Merge outputs
-5. Return final JSON
+3. Call rewrite engine (tone softening)
+4. Call apology engine (heartfelt apology generation)
+5. Merge outputs
+6. Return final JSON
 ```
 
 No one writes this fully alone.
@@ -807,3 +843,119 @@ No one writes this fully alone.
 This file is built together once modules are ready.
 
 ---
+
+# 💛 Core Philosophy: Relationship Repair
+
+This project doesn't just de-escalate conflict — it helps people **repair relationships**.
+
+The heartfelt apology engine is what separates Emotion Diffuser from a simple tone-fixer.
+
+Our apology system follows **established psychological models of apology effectiveness** — not just polite text generation.
+
+---
+
+# 🧠 The 5 Components of a Real Apology (Research-Backed)
+
+## 1️⃣ Acknowledgment of harm
+
+You must show you understand what you did wrong.
+
+❌ "Sorry if you felt hurt."
+✅ "I shouldn't have dismissed your idea during the meeting."
+
+**Why it matters:** People want to feel *seen*, not brushed off.
+
+---
+
+## 2️⃣ Taking responsibility
+
+No excuses. No blame shifting.
+
+❌ "I was stressed."
+❌ "You misunderstood me."
+✅ "That was my mistake."
+
+**Why it matters:** Responsibility signals maturity and trustworthiness.
+
+---
+
+## 3️⃣ Expression of remorse
+
+Show genuine regret.
+
+❌ robotic: "I apologize."
+✅ human: "I feel bad about how I handled that."
+
+**Why it matters:** Emotion signals sincerity.
+
+---
+
+## 4️⃣ Repair / corrective intent
+
+What will you do differently?
+
+❌ missing step → apology feels empty
+✅ "Next time I'll check with you before making changes."
+
+**Why it matters:** People forgive when they see future change.
+
+---
+
+## 5️⃣ Invitation to respond (optional)
+
+Gives the other person agency.
+
+> "I understand if you're still upset, but I'd like to make this right."
+
+**Why it matters:** Conflict resolution is two-sided.
+
+---
+
+# 🧩 LLM Apology Template
+
+The AI must generate apologies following this structure:
+
+```
+1. Name the specific action
+2. Accept responsibility
+3. Express genuine regret
+4. Offer repair / corrective change
+5. Invite response (optional)
+```
+
+This template is enforced via `mediator_engine/prompts.py`.
+
+---
+
+# 🤖 Example Transformation
+
+### Input
+
+> "I ignored my teammate's message because I was annoyed."
+
+### AI Apology Output
+
+> I realize I ignored your message earlier, and that wasn't fair to you.
+> That was my mistake, and I shouldn't have let my frustration affect how I responded.
+> I'm sorry for making you feel dismissed.
+> I'll make sure to communicate properly even when I'm stressed.
+> If you want to talk about it, I'm here.
+
+**That feels human, not robotic.**
+
+---
+
+# 🏆 Hackathon Pitch Angle
+
+You can literally say to judges:
+
+> "Our system follows established psychological models of apology effectiveness rather than just generating polite text."
+
+That sounds **research-driven**, not gimmicky.
+
+---
+
+> **This is the heart of the project. De-escalation saves the moment. Apologies save the relationship.**
+
+---
+
