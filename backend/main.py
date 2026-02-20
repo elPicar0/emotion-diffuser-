@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routes import router
-from backend.config import settings
+from routes import router
+from config import settings
 
 app = FastAPI(
     title="Emotion Diffuser API",

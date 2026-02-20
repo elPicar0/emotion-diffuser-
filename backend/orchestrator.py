@@ -8,7 +8,7 @@ text → analyze emotion → check escalation → rewrite → generate apology �
 This file will be implemented collaboratively once individual engines are ready.
 """
 
-from backend.schemas import (
+from schemas import (
     MessageIn, 
     AnalysisOut, 
     RewriteOut, 

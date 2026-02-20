@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from backend.schemas import (
+from schemas import (
     MessageIn, 
     AnalysisOut, 
     RewriteOut, 
