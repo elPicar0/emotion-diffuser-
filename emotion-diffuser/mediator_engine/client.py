@@ -1,3 +1,7 @@
+"""
+OpenAI client — singleton async client and LLM helper.
+"""
+
 from typing import Optional
 from openai import AsyncOpenAI
 from backend import config
@@ -6,6 +10,7 @@ _client: Optional[AsyncOpenAI] = None
 
 
 def get_client() -> AsyncOpenAI:
+    """Return (or create) the singleton AsyncOpenAI client."""
     global _client
 
     if _client is None:
@@ -20,10 +25,10 @@ def get_client() -> AsyncOpenAI:
 async def call_llm(
     system_prompt: str,
     user_prompt: str,
-    model: str = "config.LLM_MODEL",
+    model: str = config.LLM_MODEL,
     temperature: float = 0.7,
 ) -> str:
-
+    """Send a system + user prompt to the configured LLM and return the text response."""
     client = get_client()
 
     response = await client.chat.completions.create(

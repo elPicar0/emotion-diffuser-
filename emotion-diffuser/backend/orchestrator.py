@@ -24,6 +24,10 @@ from mediator_engine.rewrite import rewrite_message_llm, generate_apology_llm
 # ────────────────────────────────────────
 
 async def analyze_message(text: str, context: str | None = None) -> AnalysisOut:
+    """
+    Detect primary emotion, intensity, and risk level in a message.
+    Currently uses keyword-based heuristics (STUB).
+    """
     text_lower = text.lower()
 
     if any(word in text_lower for word in ["angry", "hate", "furious", "rage", "yell"]):
@@ -58,6 +62,9 @@ async def analyze_message(text: str, context: str | None = None) -> AnalysisOut:
 # ────────────────────────────────────────
 
 async def rewrite_message(text: str, analysis: AnalysisOut | None = None) -> RewriteOut:
+    """
+    Produce a calmer, constructive version of a message using the LLM.
+    """
     rewritten = await rewrite_message_llm(text, analysis)
 
     return RewriteOut(
@@ -73,6 +80,9 @@ async def rewrite_message(text: str, analysis: AnalysisOut | None = None) -> Rew
 # ────────────────────────────────────────
 
 async def generate_apology(text: str, analysis: AnalysisOut | None = None) -> ApologyOut:
+    """
+    Generate a 5-component psychological apology using the LLM.
+    """
     apology_text, components = await generate_apology_llm(text, analysis)
 
     return ApologyOut(
@@ -85,10 +95,13 @@ async def generate_apology(text: str, analysis: AnalysisOut | None = None) -> Ap
 
 
 # ────────────────────────────────────────
-# TRIGGERS (still stub)
+# TRIGGERS (Restored Logic)
 # ────────────────────────────────────────
 
 async def detect_triggers(messages: list[str], context: str | None = None) -> TriggerOut:
+    """
+    Analyze a conversation for disengagement and suggest psychology-backed triggers.
+    """
     signals = []
     short_count = sum(1 for m in messages if len(m.split()) <= 3)
     question_count = sum(1 for m in messages if "?" in m)
@@ -100,10 +113,30 @@ async def detect_triggers(messages: list[str], context: str | None = None) -> Tr
 
     engagement = "low" if len(signals) >= 2 else "medium" if signals else "high"
 
+    suggested = []
+    if engagement != "high":
+        suggested = [
+            SuggestedTrigger(
+                strategy="curiosity_gap",
+                suggestion="Something happened today that completely changed how I think about this — have you heard about it?",
+                psychology="Loewenstein's Information Gap Theory (1994)",
+            ),
+            SuggestedTrigger(
+                strategy="reciprocity_hook",
+                suggestion="I've been meaning to ask you something — you're honestly the only person whose opinion I trust on this.",
+                psychology="Cialdini's Principle of Reciprocity (1984)",
+            ),
+            SuggestedTrigger(
+                strategy="open_ended_pivot",
+                suggestion="What's been on your mind lately? I feel like we haven't really talked in a while.",
+                psychology="Motivational Interviewing (Miller & Rollnick, 2002)",
+            ),
+        ]
+
     return TriggerOut(
         engagement_level=engagement,
         signals_detected=signals,
-        suggested_triggers=[],
+        suggested_triggers=suggested,
     )
 
 
@@ -119,7 +152,9 @@ async def full_pipeline(
     include_triggers: bool = False,
     conversation_history: list[str] | None = None,
 ) -> FullPipelineOut:
-
+    """
+    Run analysis → rewrite → apology → triggers in a single unified flow.
+    """
     analysis = await analyze_message(text, context)
 
     rewrite = None
