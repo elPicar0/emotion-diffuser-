@@ -16,6 +16,8 @@ class MessageIn(BaseModel):
     text: str = Field(..., min_length=1, description="The message text to process")
     context: Optional[str] = Field(None, description="Optional context (e.g. 'argument with friend')")
     sender_name: Optional[str] = Field(None, description="Optional sender name for personalization")
+    relationship: str = Field("neutral", description="Relationship with recipient (parent, friend, partner, professional, etc.)")
+
 
 
 class ConversationIn(BaseModel):
@@ -28,10 +30,12 @@ class FullPipelineIn(BaseModel):
     """Full pipeline request — toggle which outputs you want."""
     text: str = Field(..., min_length=1, description="The message text to process")
     context: Optional[str] = Field(None, description="Optional context")
+    relationship: str = Field("neutral", description="Relationship with recipient")
     include_rewrite: bool = Field(True, description="Include calm rewrite in response")
     include_apology: bool = Field(True, description="Include heartfelt apology in response")
     include_triggers: bool = Field(False, description="Include re-engagement triggers")
     conversation_history: Optional[list[str]] = Field(None, description="Previous messages (needed if include_triggers=True)")
+
 
 
 class BatchIn(BaseModel):

@@ -1,11 +1,10 @@
 """
 Orchestrator — connects analysis + mediation engines.
-Now wired to real mediator_engine instead of stubs.
+Now wired to real mediator_engine and analysis_engine.
 """
 
 from backend.schemas import (
     AnalysisOut,
-    EmotionDetail,
     RewriteOut,
     ApologyOut,
     ApologyComponents,
@@ -15,57 +14,33 @@ from backend.schemas import (
 )
 from backend import config
 
-# ✅ Correct imports (NO emotion_diffuser prefix)
+# ✅ Real imports
 from mediator_engine.rewrite import rewrite_message_llm, generate_apology_llm
+from analysis_engine.analyzer import analyze_text
 
 
 # ────────────────────────────────────────
-# ANALYZE (still stub for now)
+# ANALYZE (Now using real analysis_engine)
 # ────────────────────────────────────────
 
 async def analyze_message(text: str, context: str | None = None) -> AnalysisOut:
     """
-    Detect primary emotion, intensity, and risk level in a message.
-    Currently uses keyword-based heuristics (STUB).
+    Detect primary emotion, intensity, and risk level using HuggingFace models.
     """
-    text_lower = text.lower()
-
-    if any(word in text_lower for word in ["angry", "hate", "furious", "rage", "yell"]):
-        emotion, intensity, risk = "anger", 0.85, "high"
-    elif any(word in text_lower for word in ["sad", "cry", "depressed", "hurt", "pain"]):
-        emotion, intensity, risk = "sadness", 0.72, "medium"
-    elif any(word in text_lower for word in ["happy", "great", "love", "wonderful", "amazing"]):
-        emotion, intensity, risk = "joy", 0.80, "low"
-    elif any(word in text_lower for word in ["scared", "afraid", "anxious", "worried", "fear"]):
-        emotion, intensity, risk = "fear", 0.65, "medium"
-    else:
-        emotion, intensity, risk = "neutral", 0.30, "low"
-
-    is_toxic = any(word in text_lower for word in ["idiot", "stupid", "shut up", "hate you", "dumb"])
-    toxicity_score = 0.88 if is_toxic else 0.05
-
-    return AnalysisOut(
-        emotion=emotion,
-        intensity=intensity,
-        risk=risk,
-        is_toxic=is_toxic,
-        toxicity_score=toxicity_score,
-        all_emotions=[
-            EmotionDetail(label=emotion, score=intensity),
-            EmotionDetail(label="neutral", score=round(1 - intensity, 2)),
-        ],
-    )
+    return await analyze_text(text, context)
 
 
 # ────────────────────────────────────────
-# REWRITE (real mediator_engine call)
+# REWRITE
 # ────────────────────────────────────────
 
-async def rewrite_message(text: str, analysis: AnalysisOut | None = None) -> RewriteOut:
+async def rewrite_message(
+    text: str, analysis: AnalysisOut | None = None, relationship: str = "neutral"
+) -> RewriteOut:
     """
     Produce a calmer, constructive version of a message using the LLM.
     """
-    rewritten = await rewrite_message_llm(text, analysis)
+    rewritten = await rewrite_message_llm(text, analysis, relationship)
 
     return RewriteOut(
         original=text,
@@ -76,14 +51,16 @@ async def rewrite_message(text: str, analysis: AnalysisOut | None = None) -> Rew
 
 
 # ────────────────────────────────────────
-# APOLOGY (real mediator_engine call)
+# APOLOGY
 # ────────────────────────────────────────
 
-async def generate_apology(text: str, analysis: AnalysisOut | None = None) -> ApologyOut:
+async def generate_apology(
+    text: str, analysis: AnalysisOut | None = None, relationship: str = "neutral"
+) -> ApologyOut:
     """
     Generate a 5-component psychological apology using the LLM.
     """
-    apology_text, components = await generate_apology_llm(text, analysis)
+    apology_text, components = await generate_apology_llm(text, analysis, relationship)
 
     return ApologyOut(
         original=text,
@@ -95,7 +72,7 @@ async def generate_apology(text: str, analysis: AnalysisOut | None = None) -> Ap
 
 
 # ────────────────────────────────────────
-# TRIGGERS (Restored Logic)
+# TRIGGERS
 # ────────────────────────────────────────
 
 async def detect_triggers(messages: list[str], context: str | None = None) -> TriggerOut:
@@ -147,6 +124,7 @@ async def detect_triggers(messages: list[str], context: str | None = None) -> Tr
 async def full_pipeline(
     text: str,
     context: str | None = None,
+    relationship: str = "neutral",
     include_rewrite: bool = True,
     include_apology: bool = True,
     include_triggers: bool = False,
@@ -159,11 +137,11 @@ async def full_pipeline(
 
     rewrite = None
     if include_rewrite and config.ENABLE_REWRITE:
-        rewrite = await rewrite_message(text, analysis)
+        rewrite = await rewrite_message(text, analysis, relationship)
 
     apology = None
     if include_apology and config.ENABLE_APOLOGY:
-        apology = await generate_apology(text, analysis)
+        apology = await generate_apology(text, analysis, relationship)
 
     triggers = None
     if include_triggers and config.ENABLE_TRIGGERS and conversation_history:

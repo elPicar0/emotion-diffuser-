@@ -83,7 +83,7 @@ async def rewrite(data: MessageIn):
         if not config.ENABLE_REWRITE:
             raise HTTPException(status_code=403, detail="Rewrite feature is disabled")
         analysis = await orchestrator.analyze_message(data.text, data.context)
-        return await orchestrator.rewrite_message(data.text, analysis)
+        return await orchestrator.rewrite_message(data.text, analysis, data.relationship)
     except HTTPException:
         raise
     except Exception as e:
@@ -103,18 +103,13 @@ async def rewrite(data: MessageIn):
 )
 async def apologize(data: MessageIn):
     """
-    Generate a genuine apology using the 5-component psychological model:
-    1. Acknowledgment of harm
-    2. Taking responsibility
-    3. Expression of remorse
-    4. Repair / corrective intent
-    5. Invitation to respond
+    Generate a genuine apology using the 5-component psychological model.
     """
     try:
         if not config.ENABLE_APOLOGY:
             raise HTTPException(status_code=403, detail="Apology feature is disabled")
         analysis = await orchestrator.analyze_message(data.text, data.context)
-        return await orchestrator.generate_apology(data.text, analysis)
+        return await orchestrator.generate_apology(data.text, analysis, data.relationship)
     except HTTPException:
         raise
     except Exception as e:
@@ -167,6 +162,7 @@ async def pipeline(data: FullPipelineIn):
         return await orchestrator.full_pipeline(
             text=data.text,
             context=data.context,
+            relationship=data.relationship,
             include_rewrite=data.include_rewrite,
             include_apology=data.include_apology,
             include_triggers=data.include_triggers,
@@ -174,6 +170,7 @@ async def pipeline(data: FullPipelineIn):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # ────────────────────────────────────────
