@@ -1,45 +1,38 @@
-"""
-Mediator Engine Client
+from typing import Optional
+from openai import AsyncOpenAI
+from backend import config
 
-Responsible for:
-- Loading the LLM
-- Running text generation
-- Returning clean string output
-
-This file is the ONLY place that talks to the model.
-"""
-
-from transformers import pipeline
-from functools import lru_cache
+_client: Optional[AsyncOpenAI] = None
 
 
-MODEL_NAME = "google/flan-t5-base"
+def get_client() -> AsyncOpenAI:
+    global _client
+
+    if _client is None:
+        if not config.OPENAI_API_KEY:
+            raise RuntimeError("OPENAI_API_KEY not set in environment.")
+
+        _client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
+
+    return _client
 
 
-@lru_cache
-def get_generator():
-    """
-    Load and cache the text generation pipeline.
-    Ensures model loads only once.
-    """
-    return pipeline(
-        "text2text-generation",
-        model=MODEL_NAME,
-        device=-1  # CPU (safe for hackathon/demo environments)
+async def call_llm(
+    system_prompt: str,
+    user_prompt: str,
+    model: str = "config.LLM_MODEL",
+    temperature: float = 0.7,
+) -> str:
+
+    client = get_client()
+
+    response = await client.chat.completions.create(
+        model=model,
+        temperature=temperature,
+        messages=[
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_prompt.strip()},
+        ],
     )
 
-
-def generate(prompt: str, max_tokens: int = 256) -> str:
-    """
-    Generate text from the model given a prompt.
-    """
-    generator = get_generator()
-
-    output = generator(
-        prompt,
-        max_length=max_tokens,
-        do_sample=True,
-        temperature=0.7,
-    )
-
-    return output[0]["generated_text"].strip()
+    return response.choices[0].message.content.strip()

@@ -1,47 +1,36 @@
-"""
-Rewrite & Apology Logic
-
-This file:
-- Builds prompts
-- Calls the LLM client
-- Returns generated text
-
-No model loading here.
-"""
-
-from .client import generate
+from .client import call_llm
 from .prompts import REWRITE_SYSTEM_PROMPT, APOLOGY_SYSTEM_PROMPT
 
 
-def rewrite_message(text: str) -> str:
-    """
-    Rewrite emotionally charged text into calm, constructive communication.
-    """
-
-    prompt = f"""
-{REWRITE_SYSTEM_PROMPT}
-
-Original Message:
+async def rewrite_message_llm(text: str, analysis=None) -> str:
+    user_prompt = f"""
+User Message:
 {text}
-
-Rewritten Message:
 """
 
-    return generate(prompt)
+    return await call_llm(
+        system_prompt=REWRITE_SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+    )
 
 
-def generate_apology(text: str) -> str:
-    """
-    Generate a structured 5-component apology.
-    """
-
-    prompt = f"""
-{APOLOGY_SYSTEM_PROMPT}
-
+async def generate_apology_llm(text: str, analysis=None):
+    user_prompt = f"""
 Original Message:
 {text}
-
-Apology:
 """
 
-    return generate(prompt, max_tokens=300)
+    apology_text = await call_llm(
+        system_prompt=APOLOGY_SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+    )
+
+    components = {
+        "acknowledgment": "",
+        "responsibility": "",
+        "remorse": "",
+        "repair": "",
+        "invitation": "",
+    }
+
+    return apology_text, components
