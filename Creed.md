@@ -1109,3 +1109,202 @@ Person A: "Cool"
 
 ---
 
+# 👨‍👩‍👧‍👦 Relationship Modes: Context-Aware Mediation
+
+Every relationship has its own rules. What works in an apology to your partner will feel strange to your boss. What re-engages a sibling will annoy a friend.
+
+Emotion Diffuser adapts its **tone, apology structure, and trigger strategy** based on the relationship context.
+
+---
+
+## Why Modes Matter (Psychology)
+
+| Relationship | Power Dynamic | Conflict Style | Attachment Pattern |
+|---|---|---|---|
+| **Parent** | Asymmetric (they raised you) | Guilt-driven, respect-heavy | Deep obligation, unconditional love |
+| **Sibling** | Peer, shared history | Rivalrous, fast-cycling | "Love-hate" bond, quick forgiveness |
+| **Partner** | Equal, emotionally vulnerable | High-stakes, attachment-triggered | Gottman's Four Horsemen risk |
+| **Friend** | Equal, voluntary | Withdrawal-based, ghosting risk | Low obligation, high optionality |
+| **Professional** | Power gap / hierarchy | Formal, reputation-aware | Low intimacy, high consequence |
+
+The system **must not** produce a single generic tone. The `relationship` field in `MessageIn` drives everything downstream.
+
+---
+
+## 🧡 Mode: Parent
+
+**Dynamics:** Parents often feel disrespected; children feel unheard. Conflicts revolve around autonomy vs. care.
+
+**Tone rule:** Respectful, accountable, emotionally mature
+
+**Apology style:**
+- Acknowledge their care even when disagreeing
+- Show maturity ("I understand where you're coming from")
+- Avoid sounding defensive or dismissive
+
+**Rewrite style:**
+- Remove eye-rolling tone, sarcasm, "whatever" energy
+- Keep the core message but frame it respectfully
+
+**Re-engagement:**
+- Lead with gratitude ("I was thinking about what you said earlier…")
+- Use questions that show respect for their experience
+
+**Example:**
+
+> ❌ "You never listen to me. You just lecture."
+> ✅ "I feel like sometimes when I share something, it turns into advice before I've finished. Can we try just talking?"
+
+---
+
+## 👫 Mode: Sibling
+
+**Dynamics:** Siblings fight fast and make up fast. Humor is the repair tool. There's deep history and little formality.
+
+**Tone rule:** Casual, warm, slightly informal
+
+**Apology style:**
+- Keep it light but real
+- Humor is okay if sincere
+- Avoid over-dramatizing — siblings detect fakeness instantly
+
+**Rewrite style:**
+- Soften the edge but keep the personality
+- Preserve casual language, don't make it stiff
+
+**Re-engagement:**
+- Inside jokes, shared memories work best
+- "Remember when…" is the strongest sibling re-engagement hook
+
+**Example:**
+
+> ❌ "You're the most annoying person alive I swear to god"
+> ✅ "You drive me crazy sometimes but you know I don't mean it like that. My bad."
+
+---
+
+## 💕 Mode: Partner
+
+**Dynamics:** Most emotionally charged. Gottman's research shows contempt, criticism, defensiveness, and stonewalling destroy relationships. The system must actively counter all four.
+
+**Tone rule:** Emotionally validating, empathetic, gentle
+
+**Apology style:**
+- Must validate their feelings FIRST before explaining
+- Use "I feel" not "You always"
+- Show emotional investment, not just logical repair
+- Reference the relationship's value ("I care about us")
+
+**Rewrite style:**
+- Remove blame language, absolute words ("always", "never")
+- Add emotional validation ("I understand this matters to you")
+- Keep vulnerability — partners need to see your feelings, not just your logic
+
+**Re-engagement:**
+- Emotional check-ins ("How are you really feeling about us?")
+- Shared future references ("I was thinking about that trip we talked about…")
+- Physical / quality time suggestions
+
+**Example:**
+
+> ❌ "You never make time for me. I'm done trying."
+> ✅ "I've been feeling disconnected lately and I miss how close we used to be. Can we talk about it?"
+
+**Gottman counter-patterns enforced:**
+
+| Horseman | System Response |
+|---|---|
+| Criticism | Rewrite as specific complaint with "I feel" |
+| Contempt | Remove sarcasm/mockery, add appreciation |
+| Defensiveness | Add ownership, remove counter-attacks |
+| Stonewalling | Suggest taking a break + re-engaging later |
+
+---
+
+## 🫂 Mode: Friend
+
+**Dynamics:** Friendships are voluntary — people can just walk away. Conflicts often end in ghosting rather than confrontation. Apologies must be genuine without being heavy.
+
+**Tone rule:** Supportive, honest, relaxed
+
+**Apology style:**
+- Keep it real, not performative
+- Acknowledge the friendship's value casually
+- Don't over-apologize — friends find that awkward
+
+**Rewrite style:**
+- Keep the casual energy but remove sharpness
+- Preserve personality and honesty
+
+**Re-engagement:**
+- Shared interests and plans work best
+- Don't force deep conversations — reignite through activity
+- "Bro you need to see this" > "We need to talk"
+
+**Example:**
+
+> ❌ "You ditched me for them, that's messed up"
+> ✅ "Ngl that kinda stung when you bailed but it's cool, just lmk next time yeah?"
+
+---
+
+## 💼 Mode: Professional
+
+**Dynamics:** Power dynamics are real. Emotional expression is limited. Everything is reputation-aware. Written records exist.
+
+**Tone rule:** Neutral, polite, structured
+
+**Apology style:**
+- Formal acknowledgment + corrective action
+- No emotional vulnerability — keep it about impact and solution
+- Reference professional standards and expectations
+
+**Rewrite style:**
+- Remove ALL emotional language
+- Frame everything as constructive feedback
+- Use "moving forward" and "I'd like to suggest" language
+
+**Re-engagement:**
+- Agenda-based ("I wanted to follow up on…")
+- Value-driven ("I have an idea that could help the project")
+- Never emotionally pressure a colleague
+
+**Example:**
+
+> ❌ "This meeting was a waste of everyone's time"
+> ✅ "I think we could structure our meetings more effectively. Would it help to share an agenda beforehand?"
+
+---
+
+## 🗂️ Implementation Guide
+
+### Where modes are enforced
+
+| File | Role |
+|---|---|
+| `backend/schemas.py` | `MessageIn.relationship` field carries the mode |
+| `mediator_engine/prompts.py` | `TONE_RULES` dict maps mode → tone description |
+| `mediator_engine/rewrite.py` | Injects tone requirement into LLM system prompt |
+| `backend/orchestrator.py` | Passes `relationship` through the full pipeline |
+
+### Future extensions
+
+Each mode can eventually have:
+- Custom few-shot examples in `prompts.py`
+- Mode-specific trigger strategies in `SUGGESTED_TRIGGERS`
+- Mode-specific apology templates (partner apologies need more emotional depth, professional apologies need action items)
+- Cultural sensitivity layers (different cultures have different parent-child dynamics)
+
+### Adding a new mode
+
+1. Add the mode name to `TONE_RULES` in `prompts.py`
+2. Add few-shot examples for the mode
+3. Add mode-specific trigger strategies to `SUGGESTED_TRIGGERS`
+4. Update `schemas.py` docs to list the new mode
+5. Update this Creed section with the mode's dynamics
+
+---
+
+> **Relationships aren't one-size-fits-all. Neither should emotional AI be.**
+
+---

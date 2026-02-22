@@ -77,9 +77,12 @@ async def generate_apology(
 # TRIGGERS
 # ────────────────────────────────────────
 
-async def detect_triggers(messages: list[str], context: str | None = None) -> TriggerOut:
+async def detect_triggers(
+    messages: list[str], context: str | None = None, relationship: str = "neutral"
+) -> TriggerOut:
     """
     Analyze a conversation for disengagement and suggest psychology-backed triggers.
+    Triggers are relationship-specific.
     """
     signals = detect_disengagement_signals(messages)
 
@@ -87,8 +90,9 @@ async def detect_triggers(messages: list[str], context: str | None = None) -> Tr
 
     suggested = []
     if engagement != "high":
-        # Convert raw triggers from prompts.py into SuggestedTrigger Pydantic models
-        suggested = [SuggestedTrigger(**t) for t in SUGGESTED_TRIGGERS]
+        # Pull mode-specific triggers, fallback to neutral
+        mode_triggers = SUGGESTED_TRIGGERS.get(relationship.lower(), SUGGESTED_TRIGGERS["neutral"])
+        suggested = [SuggestedTrigger(**t) for t in mode_triggers]
 
     return TriggerOut(
         engagement_level=engagement,
@@ -125,7 +129,7 @@ async def full_pipeline(
 
     triggers = None
     if include_triggers and config.ENABLE_TRIGGERS and conversation_history:
-        triggers = await detect_triggers(conversation_history, context)
+        triggers = await detect_triggers(conversation_history, context, relationship)
 
     return FullPipelineOut(
         analysis=analysis,

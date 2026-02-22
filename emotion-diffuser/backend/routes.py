@@ -135,7 +135,7 @@ async def triggers(data: ConversationIn):
     try:
         if not config.ENABLE_TRIGGERS:
             raise HTTPException(status_code=403, detail="Triggers feature is disabled")
-        return await orchestrator.detect_triggers(data.messages, data.context)
+        return await orchestrator.detect_triggers(data.messages, data.context, data.relationship)
     except HTTPException:
         raise
     except Exception as e:

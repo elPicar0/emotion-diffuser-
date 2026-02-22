@@ -103,10 +103,10 @@ def test_pipeline_endpoint():
     assert data["apology"] is not None
 
 
-# ── Triggers ────────────────────────────
+# ── Triggers (mode-aware) ──────────────
 
-def test_triggers_endpoint():
-    """Triggers should detect disengagement from short messages."""
+def test_triggers_endpoint_neutral():
+    """Triggers should detect disengagement from short messages (default neutral)."""
     response = client.post(
         "/api/v1/triggers",
         json={"messages": ["Ok", "Yes", "Fine"]},
@@ -115,3 +115,19 @@ def test_triggers_endpoint():
     data = response.json()
     assert data["engagement_level"] in ("low", "medium", "high")
     assert "signals_detected" in data
+
+
+@pytest.mark.parametrize("mode", ["parent", "sibling", "partner", "friend", "professional"])
+def test_triggers_endpoint_per_mode(mode):
+    """Each relationship mode should return mode-specific triggers."""
+    response = client.post(
+        "/api/v1/triggers",
+        json={"messages": ["Ok", "Yes", "Fine"], "relationship": mode},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["engagement_level"] == "low"
+    assert len(data["suggested_triggers"]) >= 2
+    # Verify the trigger strategies are mode-specific (not the generic neutral ones)
+    strategies = [t["strategy"] for t in data["suggested_triggers"]]
+    assert len(strategies) >= 2

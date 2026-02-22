@@ -24,6 +24,7 @@ class ConversationIn(BaseModel):
     """Multiple messages for engagement/trigger analysis."""
     messages: list[str] = Field(..., min_length=1, description="List of messages in conversation order")
     context: Optional[str] = Field(None, description="Optional context about the conversation")
+    relationship: str = Field("neutral", description="Relationship with recipient (parent, sibling, friend, partner, professional)")
 
 
 class FullPipelineIn(BaseModel):
