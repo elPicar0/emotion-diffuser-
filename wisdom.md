@@ -10,7 +10,7 @@ A curated list of every model and dataset relevant to Emotion Diffuser.
 # 🔬 Emotion Detection Models
 
 | Model | What it does | Link |
-|-------|-------------|------|
+|-------|--------------|------|
 | **j-hartmann/emotion-english-distilroberta-base** | 6 emotions (anger, joy, sadness, fear, surprise, disgust) — most popular | [HuggingFace](https://huggingface.co/j-hartmann/emotion-english-distilroberta-base) |
 | **SamLowe/roberta-base-go_emotions** | 28 fine-grained emotions — great for nuanced analysis | [HuggingFace](https://huggingface.co/SamLowe/roberta-base-go_emotions) |
 | **arpanghoshal/EmoRoBERTa** | 28 emotion categories, RoBERTa-based | [HuggingFace](https://huggingface.co/arpanghoshal/EmoRoBERTa) |
