@@ -6,7 +6,13 @@ import json
 import logging
 
 from .client import call_llm
-from .prompts import REWRITE_SYSTEM_PROMPT, APOLOGY_SYSTEM_PROMPT, TONE_RULES
+from .prompts import (
+    REWRITE_SYSTEM_PROMPT, 
+    REWRITE_USER_PROMPT, 
+    APOLOGY_SYSTEM_PROMPT, 
+    APOLOGY_USER_PROMPT, 
+    TONE_RULES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +39,7 @@ async def rewrite_message_llm(text: str, analysis=None, relationship: str = "neu
     if analysis:
         emotion_hint = f"\nDetected emotion: {analysis.emotion} (intensity {analysis.intensity})"
 
-    user_prompt = f"""\
-User Message:
-{text}
-{emotion_hint}"""
-
+    user_prompt = REWRITE_USER_PROMPT.format(text=text, emotion_hint=emotion_hint)
     system_prompt = REWRITE_SYSTEM_PROMPT.format(tone_requirement=tone_requirement)
 
     return await call_llm(
@@ -64,11 +66,7 @@ async def generate_apology_llm(
     if analysis:
         emotion_hint = f"\nDetected emotion: {analysis.emotion} (intensity {analysis.intensity})"
 
-    user_prompt = f"""\
-Original Message:
-{text}
-{emotion_hint}"""
-
+    user_prompt = APOLOGY_USER_PROMPT.format(text=text, emotion_hint=emotion_hint)
     system_prompt = APOLOGY_SYSTEM_PROMPT.format(tone_requirement=tone_requirement)
 
     raw = await call_llm(

@@ -16,7 +16,9 @@ from backend import config
 
 # ✅ Real imports
 from mediator_engine.rewrite import rewrite_message_llm, generate_apology_llm
+from mediator_engine.prompts import SUGGESTED_TRIGGERS
 from analysis_engine.analyzer import analyze_text
+from analysis_engine.utils import detect_disengagement_signals
 
 
 # ────────────────────────────────────────
@@ -79,36 +81,14 @@ async def detect_triggers(messages: list[str], context: str | None = None) -> Tr
     """
     Analyze a conversation for disengagement and suggest psychology-backed triggers.
     """
-    signals = []
-    short_count = sum(1 for m in messages if len(m.split()) <= 3)
-    question_count = sum(1 for m in messages if "?" in m)
-
-    if short_count > len(messages) * 0.5:
-        signals.append("short_responses")
-    if question_count == 0:
-        signals.append("no_questions")
+    signals = detect_disengagement_signals(messages)
 
     engagement = "low" if len(signals) >= 2 else "medium" if signals else "high"
 
     suggested = []
     if engagement != "high":
-        suggested = [
-            SuggestedTrigger(
-                strategy="curiosity_gap",
-                suggestion="Something happened today that completely changed how I think about this — have you heard about it?",
-                psychology="Loewenstein's Information Gap Theory (1994)",
-            ),
-            SuggestedTrigger(
-                strategy="reciprocity_hook",
-                suggestion="I've been meaning to ask you something — you're honestly the only person whose opinion I trust on this.",
-                psychology="Cialdini's Principle of Reciprocity (1984)",
-            ),
-            SuggestedTrigger(
-                strategy="open_ended_pivot",
-                suggestion="What's been on your mind lately? I feel like we haven't really talked in a while.",
-                psychology="Motivational Interviewing (Miller & Rollnick, 2002)",
-            ),
-        ]
+        # Convert raw triggers from prompts.py into SuggestedTrigger Pydantic models
+        suggested = [SuggestedTrigger(**t) for t in SUGGESTED_TRIGGERS]
 
     return TriggerOut(
         engagement_level=engagement,

@@ -4,19 +4,14 @@ Analysis Utilities — handles categorization, thresholds, and risk scoring.
 
 from typing import List, Tuple
 from backend.schemas import EmotionDetail
+from backend import config
 
-# Risk thresholds
-TOXICITY_HIGH_THRESHOLD = 0.7
-TOXICITY_MEDIUM_THRESHOLD = 0.3
-
-EMOTION_INTENSITY_HIGH_THRESHOLD = 0.8
-EMOTION_INTENSITY_MEDIUM_THRESHOLD = 0.5
 
 def calculate_risk_level(toxicity_score: float, max_emotion_score: float) -> str:
     """Determine escalation risk (high, medium, low) based on toxicity and emotion intensity."""
-    if toxicity_score > TOXICITY_HIGH_THRESHOLD or max_emotion_score > EMOTION_INTENSITY_HIGH_THRESHOLD:
+    if toxicity_score > config.TOXICITY_THRESHOLD or max_emotion_score > config.HIGH_RISK_THRESHOLD:
         return "high"
-    if toxicity_score > TOXICITY_MEDIUM_THRESHOLD or max_emotion_score > EMOTION_INTENSITY_MEDIUM_THRESHOLD:
+    if toxicity_score > config.TOXICITY_THRESHOLD * 0.5 or max_emotion_score > config.MEDIUM_RISK_THRESHOLD:
         return "medium"
     return "low"
 
@@ -36,3 +31,24 @@ def format_emotion_results(raw_scores: List[dict]) -> Tuple[str, float, List[Emo
     ]
     
     return top_emotion, top_score, details
+
+def detect_disengagement_signals(messages: List[str]) -> List[str]:
+    """
+    Analyze a list of messages for disengagement signals (heuristic-based).
+    """
+    signals = []
+    if not messages:
+        return signals
+
+    short_count = sum(1 for m in messages if len(m.split()) <= 3)
+    question_count = sum(1 for m in messages if "?" in m)
+
+    # If more than 50% of responses are very short
+    if short_count > len(messages) * 0.5:
+        signals.append("short_responses")
+    
+    # If no questions are being asked to keep the conversation going
+    if question_count == 0:
+        signals.append("no_questions")
+
+    return signals
